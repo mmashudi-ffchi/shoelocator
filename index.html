@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shoe Locator — Warehouse Tool</title>
+<style>
+  :root {
+    --bg:#f0f2f5; --card:#fff; --border:#e0e3e9;
+    --primary:#1a4fd6; --primary-dark:#1340b0;
+    --text:#111827; --muted:#6b7280;
+    --success:#16a34a; --warn:#d97706; --err:#dc2626;
+    --tag-bg:#eff6ff; --tag-text:#1d4ed8;
+    --row-alt:#f7f8fb; --radius:9px;
+    --shadow:0 1px 4px rgba(0,0,0,.07),0 4px 16px rgba(0,0,0,.05);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+  header{background:var(--primary);color:#fff;padding:13px 22px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+  header h1{font-size:1.05rem;font-weight:700;letter-spacing:-.2px}
+  header .ver{font-size:.72rem;opacity:.65;margin-left:auto;background:rgba(255,255,255,.12);border-radius:99px;padding:2px 9px}
+
+  .tabs{display:flex;background:var(--card);border-bottom:2px solid var(--border);padding:0 20px}
+  .tab-btn{background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;padding:12px 18px;font-size:.88rem;font-weight:600;cursor:pointer;color:var(--muted);transition:color .15s,border-color .15s}
+  .tab-btn.active{color:var(--primary);border-bottom-color:var(--primary)}
+  .tab-panel{display:none}.tab-panel.active{display:block}
+
+  .container{max-width:980px;margin:0 auto;padding:20px 14px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-bottom:16px}
+
+  label.fl{font-size:.75rem;font-weight:700;color:var(--muted);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+  textarea{width:100%;height:170px;border:1.5px solid var(--border);border-radius:7px;padding:10px 12px;font-size:.82rem;font-family:"Menlo","Consolas",monospace;resize:vertical;color:var(--text);line-height:1.55;background:#fafbfc}
+  textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(26,79,214,.11)}
+  input[type=text]{width:100%;border:1.5px solid var(--border);border-radius:7px;padding:10px 14px;font-size:.95rem;color:var(--text);background:#fafbfc}
+  input[type=text]:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(26,79,214,.11)}
+
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border:none;border-radius:7px;font-size:.88rem;font-weight:600;cursor:pointer;transition:.15s}
+  .btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-dark)}
+  .btn-secondary{background:#f1f2f5;color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{background:#e5e7ec}
+  .btn-sm{padding:5px 11px;font-size:.78rem}
+  .btn-row{display:flex;gap:8px;margin-top:11px;flex-wrap:wrap;align-items:center}
+  .toggle-row{display:flex;align-items:center;gap:7px;font-size:.84rem;cursor:pointer;margin-left:4px;color:var(--muted)}
+
+  .rh{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+  .rh h3{font-size:.93rem;font-weight:700}
+  .badge{display:inline-block;background:var(--tag-bg);color:var(--tag-text);border-radius:99px;padding:2px 9px;font-size:.73rem;font-weight:700;margin-left:5px}
+
+  .ag{margin-bottom:16px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .ah{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--primary);color:#fff}
+  .an{font-weight:800;font-size:.95rem;letter-spacing:.5px}
+  .am{font-size:.76rem;opacity:.8}
+  .ac{margin-left:auto;background:rgba(255,255,255,.2);border-radius:99px;padding:1px 9px;font-size:.74rem;font-weight:700}
+
+  table{width:100%;border-collapse:collapse;font-size:.84rem}
+  th{background:#f5f6f9;padding:7px 10px;text-align:left;font-weight:600;color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+  td{padding:8px 10px;border-bottom:1px solid #eef0f4;vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  tr:nth-child(even) td{background:var(--row-alt)}
+
+  .sk{font-family:"Menlo","Consolas",monospace;font-weight:700;font-size:.85rem;color:var(--primary)}
+  .ss{font-size:.74rem;color:var(--muted);margin-top:1px}
+  .sw{font-size:.72rem;color:var(--warn);margin-top:2px}
+
+  .lb{display:inline-flex;align-items:center;justify-content:center;background:var(--primary);color:#fff;border-radius:6px;padding:3px 10px;font-weight:800;font-size:.84rem;letter-spacing:.5px;min-width:42px}
+  .lb-old{background:#64748b}.lb-nf{background:var(--err)}
+
+  .qp{display:inline-block;background:#f0fdf4;color:var(--success);border:1px solid #bbf7d0;border-radius:99px;padding:1px 8px;font-size:.76rem;font-weight:700}
+  .qty-alert{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:999px;background:var(--err);color:#fff;border:2px solid #991b1b;font-size:.9rem;font-weight:900;line-height:1;box-shadow:0 0 0 2px rgba(220,38,38,.12)}
+  .sp{display:inline-block;background:#f5f3ff;color:#7c3aed;border-radius:5px;padding:1px 7px;font-size:.76rem;font-weight:700}
+  .brand-pill{display:inline-block;background:#eef2ff;color:#374151;border:1px solid #c7d2fe;border-radius:5px;padding:2px 7px;font-size:.72rem;font-weight:800;white-space:nowrap}
+
+  .empty{text-align:center;padding:36px 20px;color:var(--muted);font-size:.88rem}
+  .sr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #eef0f4}
+  .sr:last-child{border-bottom:none}.sr:nth-child(even){background:var(--row-alt)}
+  .sn{font-weight:700;font-size:.88rem}.sh{font-size:.74rem;color:var(--muted);margin-top:1px}
+
+  .tip{background:#eff6ff;border:1px solid #bfdbfe;border-radius:7px;padding:9px 13px;font-size:.8rem;color:#1e40af;margin-bottom:14px;line-height:1.5}
+  .tip strong{font-weight:700}
+
+  details.nf{margin-top:12px}
+  details.nf summary{cursor:pointer;font-size:.8rem;color:var(--err);font-weight:700;padding:6px 0}
+
+  /* ── Disclaimer ───────────────────────────────────────────────────────── */
+  .disclaimer{background:#fefce8;border:1px solid #fde68a;border-radius:7px;
+              padding:10px 14px;font-size:.78rem;color:#92400e;margin-top:12px;
+              line-height:1.55}
+  .disclaimer strong{font-weight:700;color:#78350f}
+
+  /* ── Print styles ─────────────────────────────────────────────────────── */
+  .no-print{}
+  .print-only{display:none}
+
+  @media print{
+    /* Hide screen UI */
+    header,.tabs,.tip,.btn-row,.rh .btn,#cc-status,.no-print{display:none!important}
+    .card{border:none;box-shadow:none;padding:0;margin:0}
+    .container{padding:0}
+    body{background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif;font-size:10pt}
+
+    /* Print-only elements become visible */
+    .print-only{display:block!important}
+    td.print-only,th.print-only{display:table-cell!important}
+
+    /* Print header */
+    .print-header{
+      display:flex!important;align-items:center;justify-content:space-between;
+      border-bottom:2pt solid #000;padding-bottom:6pt;margin-bottom:10pt
+    }
+    .print-header h2{font-size:14pt;font-weight:bold;margin:0;letter-spacing:.5px}
+    .print-header .ph-meta{text-align:right;font-size:8pt;color:#444}
+
+    /* Override table styles for clean B&W print */
+    table{width:100%;border-collapse:collapse;font-size:9pt}
+    th{border-bottom:1.5pt solid #000;padding:5pt 6pt;text-align:left;
+       font-size:7.5pt;text-transform:uppercase;letter-spacing:.4px;
+       background:none!important;color:#000}
+    td{border-bottom:.5pt solid #ccc;padding:5pt 6pt;vertical-align:middle;background:none!important}
+    tr:nth-child(even) td{background:none!important}
+    tr:last-child td{border-bottom:1pt solid #000}
+
+    /* Aisle badge in print */
+    .lb{background:none!important;color:#000!important;border:1.5pt solid #000;
+        font-weight:800;padding:2pt 6pt;border-radius:3pt;font-size:9pt}
+    .lb-nf{border-color:#000;color:#000!important}
+    .lb-old{border-color:#666;color:#666!important}
+
+    /* Shoe key */
+    .sk{font-family:"Courier New",monospace;font-weight:700;font-size:9pt;color:#000}
+    .ss{font-size:7.5pt;color:#555;margin-top:1pt}
+    .sw{font-size:7pt;color:#888;margin-top:1pt}
+
+    /* Checkbox cell */
+    .pcheck{width:14pt;height:14pt;border:1.5pt solid #000;display:inline-block}
+    .qty-alert{background:none!important;color:#000!important;border:2pt solid #000!important;box-shadow:none!important;width:20pt;height:20pt;font-size:9pt}
+
+    /* Row number */
+    .rnum{color:#888;font-size:8pt}
+
+    /* Print-only size/qty cells */
+    .print-only.pc-size{font-weight:700;font-size:9pt}
+    .brand-pill{background:none!important;color:#000!important;border:1pt solid #999!important;font-size:7.5pt;padding:1pt 4pt}
+
+    /* Disclaimer */
+    .disclaimer{
+      display:block!important;border-top:1pt solid #ccc;margin-top:14pt;
+      padding-top:8pt;font-size:7.5pt;color:#555;background:none!important;
+      border-left:none;border-right:none;border-bottom:none;border-radius:0
+    }
+
+    /* Don't hide details */
+    details.nf{display:none!important}
+
+    /* Page breaks */
+    @page{margin:1.5cm 1.8cm}
+    tr{page-break-inside:avoid}
+    /* Hide the input card (textarea + buttons) in print */
+    #input-card{display:none!important}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <img src="data:image/png;base64,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" alt="Fleet Feet" style="height:30px;width:auto;display:block">
+  <h1 style="margin-left:14px">Shoe Locator</h1>
+  <span class="ver">Warehouse Pick Tool</span>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('pl',this)">📋 Pick List</button>
+  <button class="tab-btn" onclick="switchTab('sr',this)">🔍 Search Directory</button>
+</div>
+
+<div id="tab-pl" class="tab-panel active">
+<div class="container">
+  <div class="tip">
+    <strong>How to use:</strong> Copy everything from ShipStation (or the PDF pick list) and paste below — headers, item numbers, warehouse codes, all of it. Results show the directory format (e.g. <strong>M Mach 7 WIDE</strong>) grouped by aisle.
+  </div>
+  <div class="card" id="input-card">
+    <textarea id="pi" placeholder="Paste pick list here — tab-separated or plain text both work.
+
+198605796685	Men's | HOKA Mach 7 - WIDE -- ALABASTER / SOARING BLUE - Size 11.5 - Width 2E	0.0.0.0	1
+198605654060	Men's | HOKA Bondi 9 - THUNDER CLOUD / VERMILLION - Size 8 - Width D	0.0.0.0	1
+198686697208	Men's | New Balance Fresh Foam X 1080 v14 - URGENT RED - Size 10 - Width D	0.0.0.0	1
+199023140357	Men's | ASICS Gel-Cumulus 28 - BLACK / CARRIER GREY - Size 10 - Width D	0.0.0.0	1
+195394662542	Men's | Brooks Adrenaline GTS 25 - BLACK / BLACK / EBONY - Size 12.5 - Width D	0.0.0.0	1"></textarea>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="run()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Find Locations
+      </button>
+      <button class="btn btn-secondary" onclick="loadDirectoryFromGoogle()" id="refresh-dir-btn">🔄 Refresh from Sheets</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('csv-upload').click()" title="Backup: upload CSV file instead">📂 Load CSV</button>
+      <input type="file" id="csv-upload" accept=".csv,text/csv" style="display:none" onchange="handleCSVUpload(event)">
+      <button class="btn btn-secondary" onclick="resetDirectory()" title="Restore built-in directory">↩</button>
+      <button class="btn btn-secondary" onclick="hardRefreshDirectory()" title="Clear saved data and pull the latest Google Sheet">🧹 Hard Refresh</button>
+      <button class="btn btn-secondary" onclick="clearAll()">Clear</button>
+      <label class="toggle-row" title="Turn on to sort the results by aisle for faster picking">
+        <input type="checkbox" id="sort-aisle" onchange="if(document.getElementById('out').innerHTML.trim()) run()">
+        Group by aisle
+      </label>
+    </div>
+    <div id="dir-status" style="font-size:.75rem;color:var(--muted);margin-top:5px"></div>
+  </div>
+  <div id="out"></div>
+</div>
+</div>
+
+<div id="tab-sr" class="tab-panel">
+<div class="container">
+  <div class="tip">
+    <strong>Restocking &amp; store transfers:</strong> Type any part of the name — <em>bondi sr, ghost 18 wide, mach 7, kayano 32</em> — results update as you type.
+  </div>
+  <div class="card">
+    <label class="fl">Search Shoe Directory</label>
+    <input type="text" id="sq" placeholder='e.g. "Bondi SR" · "Ghost 18 wide" · "M Arahi" · "kayano"' oninput="search()" autocomplete="off" spellcheck="false">
+  </div>
+  <div class="card" id="sr">
+    <div class="empty">Start typing — 601 shoes + 103 accy/app items indexed</div>
+  </div>
+</div>
+</div>
+
+<script>
+// ─── Full directory ───────────────────────────────────────────────────────────
+// ─── Directory ───────────────────────────────────────────────────────────────
+// Directory is loaded from (in order of preference):
+//   1. Browser localStorage (user-uploaded CSV from previous session)
+//   2. Embedded fallback (current shoes baked into this file)
+// User can upload an updated CSV anytime via the "Load Directory CSV" button.
+// Built-in backup refreshed from uploaded Footwear + Accy/App CSVs.
+let D={"W Clifton 10":"A1","W Clifton 10 WIDE":"B1","W Adrenaline 25":"C1","W Glycerin Flex":"B1","W Adrenaline 25 WIDE":"C1","W Cloud 6 WP":"B1","W Adrenaline 25 EXTRA WIDE":"C1","M Clifton 10":"A2","M Clifton 10 WIDE":"B2","M Adrenaline 25":"C2","M Clifton 10 EXTRA WIDE":"B2","M Adrenaline 25 Wide":"C2","M Glycerin Flex":"B2","M Adrenaline 25 EXTRA WIDE":"C2","M Cloud 6 WP":"B2","W Bondi 9 WIDE":"A3","W Bondi 9":"C3","W Cloud 6":"A3","W Glycerin GTS 23":"B3","W Escalante 4":"C3","W Glycerin GTS 23 WIDE":"A3","W Ride 19 Wide":"B3","W Ride 19":"A3","M Bondi 9 X WIDE":"A4","M Bondi 9":"C4","M Bondi 9 WIDE":"A4","M Glycerin GTS 23":"B4","M Escalante 4":"C4","M Glycerin GTS 23 WIDE":"A4","M Ride 19 Wide":"B4","M Cloud 6":"A4","M FWD Via 2":"A4","M Ride 19":"A4","W Ghost Max 3 WIDE":"A5","W Ghost Max 3":"B5","W Glycerin 23":"C5","W Cloudrunner 3":"A5","W Hurricane 25 WIDE":"B5","W Glycerin 23 WIDE":"C5","W Cloudrunner 3 WIDE":"A5","W Glideride Max 2":"B5","W More v6":"A5","W More v6 WIDE":"A5","W FWD Via 2":"A5","M Ghost Max 3 WIDE":"A6","M Ghost Max 3":"B6","M Glycerin 23":"C6","M Cloudrunner 3":"A6","M Hurricane 25 WIDE":"B6","M Glycerin 23 WIDE":"C6","M Cloudrunner 3 WIDE":"A6","M Glideride Max 2":"B6","M More v6 WIDE":"A6","M More v6":"A6","W Guide 19":"A7","W Ghost 18":"B7","W Hyperion 3":"C7","W Guide 19 WIDE":"A7","W Ghost 18 WIDE":"B7","W Nimbus 28":"C7","W 1080 v15":"A7","W Hurricane 25":"C7","W 1080 v15 Wide":"A7","W Hyperion Max 3":"B7","W Nimbus 28 Wide":"C7","W Endorphin Pro 5":"C7","M Guide 19":"A8","M Ghost 18":"B8","M Hyperion 3":"C8","M Guide 19 WIDE":"A8","M Ghost 18 WIDE":"B8","M Nimbus 28":"C8","M 1080 v15":"A8","M Hyperion Max 3":"B8","M Hurricane 25":"C8","M 1080 v15 Wide":"A8","M Nimbus 28 Wide":"C8","M Endorphin Pro 5":"C8","W 880 v15":"A9","W Arahi 8 WIDE":"B9","W Arahi 8":"C9","W Cloudmonster 3":"A9","W Cumulus 28":"B9","W 880 v15 WIDE":"C9","W Cumulus 28 WIDE":"B9","W Triumph 23":"C9","W Triumph 23 WIDE":"B9","M 880 v15":"A10","M Arahi 8 WIDE":"B10","M Arahi 8":"C10","M Cloudmonster 3":"A10","M Cumulus 28":"B10","M 880 v15 WIDE":"C10","M Cumulus 28 WIDE":"B10","M Triumph 23":"C10","M Triumph 23 WIDE":"B10","W 860 v15":"A11","W Glycerin Max 2":"B11","W 860 v15 WIDE":"A11","W Kayano 33":"B11","W Endorphin Speed 5":"A11","W Kayano 33 WIDE":"B11","W Mach 7":"C11","W Kayano 33 EXTRA WIDE":"B11","W Mach 7 WIDE":"C11","W Paradigm 8":"B11","W Novablast 5":"C11","W Novablast 5 WIDE":"C11","M 860 v15":"A12","M Glycerin Max 2":"B12","M 860 v15 WIDE":"A12","M Kayano 33":"B12","M Kayano 33 WIDE":"B12","M Mach 7":"C12","M Endorphin Speed 5":"A12","M Paradigm 8":"B12","M Mach 7 WIDE":"C12","M Novablast 5":"C12","M Novablast 5 WIDE":"C12","W Glycerin Stealthfit 22":"C13","W SonicBlast":"A13","W Supercomp Pacer v2":"C13","W Arahi SR":"A13","W Solimar 2":"C13","W Experience Wild 3":"A13","W Cascadia 19":"B13","W Cloudsurfer Max":"C13","U Superblast 3":"A13","W Cascadia 19 Wide":"B13","W Skyward X2":"C13","W SuperComp Elite v5":"A13","W Ghost 17 GTX":"B13","W Gaviota 6":"C13","W Supercomp Trainer v3":"B13","W Experience Flow 3":"C13","W 880 v15 GTX":"B13","W Speedgoat 7":"B13","W Endorphin Azura":"B13","W Ghost Trail":"B13","W Gaviota 6 WIDE":"B13","M Supercomp Trainer v3":"B14","M Glycerin Stealthfit 22":"C14","M Paradigm 8 WIDE":"A14","M Speedgoat 7":"B14","M Supercomp Pacer v2":"C14","M SonicBlast":"A14","M Solimar 2":"C14","M Arahi SR":"A14","M Cloudsurfer Max":"C14","M Cascadia 19":"B14","M Skyward X2":"C14","M SuperComp Elite v5":"A14","M Ghost 17 GTX":"B14","M Gaviota 6":"C14","U Cloudboom Strike LS":"A14","M 880 v15 GTX":"B14","U CloudMonster 3 Hyper LS":"A14","M Experience Flow 3":"C14","M Ghost Trail":"B14","M Gaviota 6 WIDE":"B14","M Endorphin Azura":"B14","Y Clifton 10":"A15","W FuelCell XC Seven v5 WXCS7":"B15","W Rebel v5":"C15","W Ariel 26":"A15","W Cloudsurfer Next":"B15","W Cloudsurfer Trail WP":"C15","W Ariel 26 WIDE":"A15","W Wave Rider 29":"B15","W Peregrine 14":"C15","W Vongo v6":"A15","W Cloudsurfer 2":"B15","W Alphafly 3":"C15","W Lone Peak 9":"A15","W Wave Inspire 22":"C15","U ROCKET X 3":"A15","W Ikoni 3.5 HiVo":"B15","W Cloudmonster 3 Hyper":"C15","W Vanish Carbon 2":"A15","W Experience Flow ST":"C15","U MegaBlast":"A15","M Adrenaline GTS - 4":"C15","W Nucleo 2":"A15","W Cloudsurfer Next WIDE":"B15","W Nucleo 2 WIDE":"A15","W Torin 8":"B15","W Ikoni 3.5":"A15","W Torin 8 WIDE":"B15","W Wave Sky 9":"A15","M Beast 26":"A16","M FuelCell XC Seven v5 MXCS7":"B16","M Rebel v5":"C16","M Beast 26 WIDE":"A16","M Cloudsurfer Next":"B16","M Cloudsurfer Trail WP 2":"C16","M Vongo v6":"A16","M Wave Rider 29":"B16","M Alphafly 3":"C16","U FuelCell XC Seven v5 UXCS7":"A16","M Cloudsurfer 2":"B16","M Wave Inspire 22":"C16","M Vanish Carbon 2":"A16","M Cloudsurfer 2 WIDE":"B16","M Cloudmonster 3 Hyper":"C16","M Nucleo 2":"A16","M Ikoni 3.5 HiVo":"B16","M Experience Flow ST":"C16","M Nucleo 2 WIDE":"A16","M Ikoni 3.5":"A16","M Torin 8":"B16","M Experience Wild 2":"A16","M Torin 8 WIDE":"B16","M Lone Peak 9":"A16","M Wave Sky 9":"A16","M METASPEED SKY TK (Tokyo)":"A17","W Bondi SR WIDE":"B17","W Bondi SR":"C17","M Metaspeed Sky Paris":"A17","W Endorphin Cheetah 9":"B17","W Cloudboom Max":"C17","M MetaSpeed Sky+":"A17","W Zoom Fly 6":"B17","W Cloud Spike":"C17","Y Novablast 4 GS":"A17","W Neo Vista 2":"B17","W Vigore 5":"C17","W Neo Zen 2":"A17","W Cloudspike XC":"C17","W Ellipse":"A17","W Kinvara 16":"B17","M RESURGENCE XC* (*technically unisex)":"A17","W Structure 26":"B17","W Hierro v8":"A17","W Structure PLUS":"B17","W Cloudsurfer 2 WIDE":"B17","W Escalante Racer 2":"A17","W Mach X 3":"A17","U Magic Speed 5":"A17","W Mestari Run 2.0":"A17","M Metaspeed Edge Paris":"A18","M Bondi SR WIDE":"B18","M Bondi SR":"C18","M MetaSpeed Edge+":"A18","M Zoom Fly 6":"B18","M Cloudboom Max":"C18","U METASPEED EDGE TOKYO":"A18","M Neo Vista 2":"B18","M Cloud Spike":"C18","M Zoom Fly 6 EK":"A18","M Structure PLUS":"B18","M Vigore 5":"C18","M Ellipse":"A18","M Kinvara 16":"B18","M Mestari Run 2.0 HiVo":"C18","M Neo Zen 2":"A18","M Structure 26":"B18","M Cloudspike XC":"C18","U SuperComp LD-X (ULDELRE2)":"A18","M Hierro v8":"A18","M Air Zoom LJ Elite (Long Jump Elite)":"A18","M Escalante Racer 2":"A18","M Mach X 3":"A18","M Mestari Run 2.0":"A18","W Transport GTX":"A19","W Transport 2":"B19","W SuperComp Elite v4":"C19","Y RINCON 4":"A19","W Transport GTX WIDE":"B19","M Rival Sprint":"C19","ZoomX Dragonfly XC":"A19","M Zoom Victory 2 All":"B19","M Rival Sprint All":"C19","M Rival Distance":"A19","U SPRINTSTAR":"B19","M Zoom Victory 2":"C19","W Fusion 4.5":"A19","W Supernova Rise 3":"B19","W Adrenaline 24":"C19","U CIELO X 2 LD":"A19","U Kilkenny XC 10":"B19","W Adrenaline 24 WIDE":"C19","M Track Distance - UFCMDV1 - FuelCell Flite-D":"A19","M Hyperion Elite 5 (All Gender)":"B19","W GT-2000 v14":"C19","M Track Sprint - UFCSPV1":"A19","M Hyper Throw 3":"B19","W GT-2000 v14 WIDE":"C19","U SuperComp PWR-X v3":"A19","M Velocity MP":"B19","W Cloudsurfer Trail 2":"C19","W Fusion 4.5 HIVO":"A19","M Terminal VT":"B19","W Cellula 2":"A19","M Spitfire 5":"B19","U Cielo X1 3.0":"A19","W Adizero Adios Pro 4":"B19","U Zoom Rotational 6":"A19","W Vomero Premium":"B19","W cloud x 4":"B19","M Transport GTX":"A20","M Transport 2":"B20","M SuperComp Elite v4":"C20","Y SPEEDGOAT 6":"A20","U CIELO X 2 MD":"B20","M ZoomX Dragonfly 2 Elite":"C20","U CRESCENDO MD":"A20","U ADIZERO PRIME SP 4":"B20","M Zoomx Dragonfly 2 (RSG)":"C20","U CIELO X1":"A20","M Pegasus Premium":"B22","M Ikoni Trail":"C20","M Rival Multi":"A20","M Volo 5":"B20","M Atomo Star":"C20","M Rival Multi All":"A20","M Adizero Adios Pro 4":"B20","M Adizero":"C20","M Zoom Rival XC 6":"A20","M Vomero Premium":"B20","M Adrenaline 24":"C20","M Fusion 4.5":"A20","M / U Unleash SD 3":"B20","M Adrenaline 24 WIDE":"C20","M Fusion 4.5 HIVO":"A20","M Endorphin Cheetah":"B20","M Adrenaline 24 NARROW":"C20","M Cellula 2":"A20","M Zoom Maxfly 2":"B20","M Zoom Superfly Elite 2 FK":"C20","U Cielo X1 2.0":"A20","M Supernova Rise 3":"B20","M GT-2000 v14":"C20","M cloud x 4":"B20","M GT-2000 v14 WIDE":"C20","M Transport GTX WIDE":"B20","M Cloudsurfer Trail 2":"C20","M Adizero Evo SL":"C20","U Superblast 2":"A21","W Adizero Evo SL WOVEN":"B21","W Vomero 18":"C21","W More v5 WIDE":"A21","W Zoom Fly 6 GLAM":"B21","U Adios Pro Evo 2":"C21","U ZoomX Dragonfly":"A21","W More v5":"B21","W Adizero":"C21","W Vigore 4":"A21","W Vaporfly Next% 4":"B21","W Glideride Max":"C21","W Mach 6":"A21","W Adizero Boston 13":"B21","W Endorphin Pro 4":"C21","W Mach 6 WIDE":"A21","W Pegasus Premium":"B21","W Vomero Plus":"C21","W Mestari Run 1.5":"A21","W Cloudmonster 2":"B21","W Pegasus 42":"C21","W Mestari Run 1.5 HIVO (WIDE)":"A21","M Endorphin Elite 2":"B21","W 1080 v14 WIDE":"A21","W 1080 v14":"A21","W Cloudrunner 2":"A21","W Cloudrunner 2 WIDE":"A21","W Cloudrunner 2 WP":"A21","W Neo Zen":"A21","W 860 v14 WIDE":"A21","W 860 v14":"A21","W Ghost 17":"A21","W Ghost 17 Wide":"A21","M Rival SD 2":"A22","M Vomero 18":"C22","M Vigore 4":"A22","M Zoom Fly 6 GLAM":"B22","M Mestari Run 1.5":"A22","M Vomero Plus":"B22","M Endorphin Pro 4":"C22","M Mestari Run 1.5 HIVO (WIDE)":"A22","M Cloudmonster 2":"B22","M Vaporfly Next% 4":"C22","M 1080 v14":"A22","M Pegasus 41 EK)":"B22","M Pegasus 42":"C22","M 1080 v14 WIDE":"A22","M Adizero Boston 13":"B22","M THROWSTAR":"C22","M Cloudrunner 2":"A22","M ADIZERO AVANTI":"C22","M Cloudrunner 2 WIDE":"A22","M Adizero Evo SL WOVEN":"B22","M Glideride Max":"C22","M Cloudrunner 2 WP":"A22","M Neo Zen":"A22","M Mach 6":"A22","M Mach 6 WIDE":"A22","M 860 v14 WIDE":"A22","M 860 v14 EXTRA WIDE":"A22","M 860 v14":"A22","M Ghost 17":"A22","M Ghost 17 Wide":"A22","W Gaviota 5 WIDE":"B23","W Glycerin 22":"C23","XC Seven v4 UXCR7V4 (NB UXCS7)":"B23","W Glycerin 22 WIDE":"C23","UXC5K (NewBalance)":"B23","W Glycerin GTS 22":"C23","SuperComp SD-X":"B23","W Glycerin GTS 22 WIDE":"C23","USD100 v4 (New Balance) (Men's and Unisex)":"B23","W Cloudmonster Hyper":"C23","U Supercomp MDX v3 MD-X v3":"B23","W Endorphin Speed 5 - BGR":"C23","M Tempus":"B23","W Ride 19 - BGR":"C23","M Triumph 22":"B23","W Pegasus 41":"C23","M Triumph 22 WIDE":"B23","Zoom SD 4":"B23","W Structure 25":"B23","W Structure 25 Premium":"B23","W Volo 4":"B23","W Supercomp Pacer":"B23","W Supercomp Trail":"B23","W Supercomp Elite v3":"B23","M Ghost Max 2":"B23","M Ghost Max 2 WIDE":"B23","UA BRIGADE XC LOW":"B23","W Kilkenny XC 9":"B23","M Clifton 9 GTX":"B23","M Kinvara Pro":"B23","M Clifton 9":"B23","M Wave Rider 28":"B23","W MACH X 2":"B23","W Nimbus 27 WIDE":"B23","W Nimbus 27":"B23","W Arahi 7":"B23","M Speedgoat 6":"B23","M Fusion 4.0 HIVO":"B23","M Fusion 4.0":"B23","W Solimar":"B23","W Gaviota 5":"B23","W Ikoni Trail WR":"B23","W Hierro v7 (including GTX)":"B23","W Hurricane 24 WIDE":"B23","W Tempus WIDE":"B23","W Tempus":"B23","W Triumph 22 WIDE":"B23","W Hierro Mid (including GTX)":"B23","W Kinvara 15":"B23","W Stinson 7":"B23","W Hyperion":"B23","W Cascadia 18":"B23","W Ariel 20 EXTRA WIDE":"B23","W Endorphin Cheetah":"B23","W Kayano 31":"B23","W Provision 7":"B23","W Bondi 7 WIDE":"B23","W Nimbus 26":"B23","W Fusion 4.0":"B23","W Ariel 24":"B23","W Ariel 24 WIDE":"B23","W Kayano 32":"B23","W Kayano 32 WIDE":"B23","W Ghost Max 2":"B24","M Cloudmonster Hyper":"C24","W Glycerin Max":"B24","M Glycerin 22 WIDE":"C24","W Ghost Max 2 Suede (SE)":"B24","M Glycerin GTS 22":"C24","W Rebel v4":"B24","M Glycerin GTS 22 GTS":"C24","W 880 v13":"B24","M Pegasus 41":"C24","W 880 v13 WIDE":"B24","M Glycerin 22":"C24","W 880 v12":"B24","W Cloudspike 1500M":"B24","W Omni 21 WIDE":"B24","W Endorphin":"B24","W Endorphin Speed 3":"B24","W Endorphin Speed 4":"B24","W Havok XC3":"B24","W Kilkenny XC 8":"B24","M Kilkenny XC 9":"B24","M Ghost 16":"B24","M More v5 WIDE":"B24","W Vaporfly 3 - Label W Vaporfly Next% 3":"B24","W Vaporfly Next% 3 - Label W Vaporfly Next% 3FK":"B24","W Wave Rider 28":"B24","W Addiction Walker 2":"B24","M Cloudboom Strike":"B24","M Gaviota 5 WIDE":"B24","M Gaviota 5":"B24","M Nimbus 27 WIDE":"B24","W Magic Speed 4":"B24","W Speedgoat 6":"B24","W Vanish Carbon":"B24","W Solstice XT 2":"B24","W Launch 9":"B24","W Torin 5 Luxe":"B24","M Tecton X3":"B24","M Solimar":"B24","M Air Zoom Victory":"B24","M Beast 24":"B24","M Beast 24 WIDE":"B24","M Kinvara 15":"B24","M Kayano 32":"B24","M Kayano 32 WIDE":"B24","M Ghost Max 2 Suede (SE)":"B25","Y GP 860 v13":"B25","Y GP 880 v12":"B25","Y GP Rebel v3 (GPFCXV3)":"B25","MD800 v8 (New Balance)":"B25","Y PP 880 v12":"B25","Y PP 880 v11":"B25","UMD500 v8 (New Balance)":"B25","UMD500 v9 (New Balance)":"B25","M Hurricane 24":"B25","M Hurricane 24 WIDE":"B25","M Omni 22":"B25","M Ride 17":"B25","M Ride 17 WIDE":"B25","M Structure 25":"B25","M ROCKET X 2":"B25","Y Ride 15":"B25","M Soarin J 3":"B25","U TRANSPORT X":"B25","W Ikoni 3.0":"B25","W Ikoni 3.0 HIVO (WIDE)":"B25","W Transport":"B25","W Cloudboom Strike":"B25","M Addiction Walker 2":"B25","W Skyward X":"B25","W Ride 18 WIDE":"B25","W Ride 18":"B25","W Cumulus 27":"B25","W Cumulus 27 WIDE":"B25","M Bondi 8":"B26","M Nimbus 27":"B26","M Speedgoat 4":"B26","M Speedgoat 4 WIDE":"B26","M STINSON ATR 7":"B26","M BONDI X":"B26","M CHALLENGER ATR 7":"B26","M Kayano 30":"B26","M Kayano 30 WIDE":"B26","M Kayano 31":"B26","M Nimbus 24 WIDE":"B26","M Arahi 7 WIDE":"B26","M Adrenaline 23 NARROW":"B26","M Hyperion 2":"B26","M Hyperion Max 2":"B26","M Glycerin Max":"B26","M Glycerin 21":"B26","M Glycerin 20":"B26","M Glycerin GTS 21":"B26","M Cascadia 18":"B26","M Arahi 7":"B26","M Experience Wild":"B26","M Outroad 2":"B26","M Vaporfly 3 FK":"B26","M Vaporfly Next% 3":"B26","M Victory":"B26","M Victory XC 5":"B26","M Rebel v4":"B26","M More v4":"B26","M 327 (New Balance)":"B26","M 880 v12":"B26","M 880 v13 NARROW":"B26","M 880 v14":"B26","M 880 v14 NARROW":"B26","M 1080 v13":"B26","M 1080 v13 WIDE":"B26","M 1080 v13 NARROW":"B26","M 860 v12 EXTRA WIDE":"B26","M Cloudboom Echo 1":"B26","M Cloudeclipse 4":"B26","M Endorphin 3":"B26","M Endorphin Pro 3":"B26","M Freedom Crossport":"B26","M Guide 17":"B26","M Havok XC3":"B26","M Zoom Rival M9 and S9":"B26","M High Jump Elite":"B26","Zoom Rival XC 5":"B26","M Triple Jump Elite in RICS box says Triple Jump Elite 2":"B26","M Triple Jump Elite in RICS (box says Triple Jump Elite 3)":"B26","M Zoom Fly 5":"B26","M GT-2000 v12 EXTRA WIDE":"B26","M Kilkenny XC 8":"B26","M Endorphin":"B26","M Peregrine 13 GTX":"B26","M Ikoni 3.0":"B26","M Ikoni 3.0 HIVO (WIDE)":"B26","M Transport":"B26","M Skyward X":"B26","W Clifton 9 GTX":"B26","M Ride 18":"B26","M Ride 18 WIDE":"B26","M Cumulus 27":"B26","M Cumulus 27 WIDE":"B26"};
+let DL={}, DL_NP={};
+
+// Google Sheets live sync with CSV upload and built-in fallback.
+let ACCY_D={"GU - Gels, Waffles, Chews, Liquid Energy":"D1","Salt Stick":"D1","Maurten -  Drink Mix, Gels, Bars":"D1","Chi Chi shorts (7\" larger sizes)":"A23","Chi Chi shorts (5\", 7\", Wmns)":"A23","Cotopaxi":"A23","ON (hats)":"A23","Lululemon ACC/APP":"A23","Vuori":"A23","Brooks (bras)":"A23","OS1st":"A24","Shokz":"A24","Jason Markk":"A24","Coros":"A24","Strassburg Socks":"A24","Garmin":"A24","Sabre Defense Spray/Pepper Gel":"A24","Rock Tape":"A24","2024 Totes (beige)":"A24","Blazer Spikes":"A24","2025 Totes (black)":"A24","Smartwool (ACC & APP)":"A24","Boco (FF branded hats)":"A24","Ciele (hats)":"A24","SOL Laces (Implus)":"A24","Nipguards":"A24","Therabody":"A25","Asics apparel":"A26","Oofos - Men's/Unisex Shoes":"B25","Oofos Sandals (1000)":"B25","Oocloog (1200)":"B25","Oomy Stride (5087)":"B25","Oomy Zen":"B27","Oocoozie Sport Mule":"B27","Oomg Sport":"B25","OOmega OOlala":"B27","OOmega Ooahh":"B27","Oofos Slides - Flex (1550)":"B25","Bodyglide":"A26","Goodr (sunglasses)":"A26","CEP":"A26","Oofos - Slides":"B27","Oofos - Slides (oolala & Ooahh)":"B26","Oofos - Slides (1100)":"B26","Oolala (1400) Mint":"B26","Superfeet storage":"B30","Clif":"A27","Ketone (Caffeine)":"A27","Ketone (No Caffeine)":"A27","Honey Stinger (Gels & Waffles)":"A27","Honey Stinger (Chews)":"A27","Triggerpoint":"A27","Oofos - Women's Shoes":"B27","Oomy Stride (5077)":"B27","Ooyea (1700) Primrose":"B27","Ooahh 1100 Monstruck":"B27","Oomega":"B27","Hoka Slides":"B27","Balega sock storage":"B27","Marathon Expo Apparel":"C28","Sprint Chicago App/Gear":"C28","Train Hoodie":"C28","Run Chi Crew":"C27","Sprint Finisher jackets":"C27","Fleet Feet branded apparel":"C27","2025 One Day Totes (black)":"C27","Boston Marathon New Balance Apparel":"C28","Distribution Addtl Shipments/Storage (i.e. Expo, Libertyville)":"C28","Superfeet":"A28","Nuun":"A28","Nathan":"A28","Run Support - v2 Low, Med, High":"A28","Pillar":"A28","UL Sport":"A28","Huma":"A28","Support - Women's, Pain Relief":"A28","Sprint":"A28","Run Pacer Elite":"A28","Carbsfuel (New)":"A28","Run Support - Med":"A28","Sky socks (NS)":"A28","Superfeet Run Support Low, High":"B28","Balega socks":"B28","Balega (ecomm orders)":"B28","Hell & Back":"C28","Navy Repeat Hoodie":"C28","Run Chi Hoodie":"C28","Fleet Feet brand apparel":"C28","Currex - High, Med, Low":"A29","Sky socks (Qtr, Crew)":"A29","Maurten gel flasks":"A29","Superfeet (Wide / Casual) / Easyfit / Run Pacer":"A29","UCAN":"A29","Chi course map insulated\ntumblers (Well Told brand)":"A29","SIS":"A29","Superfeet All-Purpose (Heritage)":"B29","Feetures socks":"B29","Feeture socks":"B29","Green\nBlue\nBlack\nCopper\nBerry\nOrange":"B29","Currex storage":"A30","Sky sock storage":"A30","Feetures storage":"B30","Feeture sock storage":"B30"};
+const SHEET_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8XdLoRsZomXuBXzNmlcoX-RtImYjGfpwYb6tgzK5LDMd2RdXPbLbl04PDUEtprjr6_sjFxO8als_C/pub?gid=0&single=true&output=csv';
+const ACCY_SHEET_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8XdLoRsZomXuBXzNmlcoX-RtImYjGfpwYb6tgzK5LDMd2RdXPbLbl04PDUEtprjr6_sjFxO8als_C/pub?gid=271434529&single=true&output=csv';
+
+// RFC-4180-ish CSV parser. This is safer than split(',') because Google Sheets
+// quotes cells that contain commas, quotes, or line breaks.
+function csvToRows(csvText){
+  const rows=[];
+  let row=[];
+  let cell='';
+  let inQuotes=false;
+
+  for(let i=0;i<csvText.length;i++){
+    const ch=csvText[i];
+    const next=csvText[i+1];
+
+    if(ch === '"'){
+      if(inQuotes && next === '"'){
+        cell += '"';
+        i++;
+      }else{
+        inQuotes = !inQuotes;
+      }
+    }else if(ch === ',' && !inQuotes){
+      row.push(cell.trim());
+      cell='';
+    }else if((ch === '\n' || ch === '\r') && !inQuotes){
+      if(ch === '\r' && next === '\n') i++;
+      row.push(cell.trim());
+      if(row.some(c => c.length > 0)) rows.push(row);
+      row=[];
+      cell='';
+    }else{
+      cell += ch;
+    }
+  }
+
+  row.push(cell.trim());
+  if(row.some(c => c.length > 0)) rows.push(row);
+  return rows;
+}
+
+// Track duplicated shoes found while reading the directory CSV.
+let LAST_DIRECTORY_DUPES=[];
+
+// Parse either:
+//   A) the column-based warehouse layout with aisle headers across the row, or
+//   B) a simple list layout with shoe/name/model and aisle/location columns.
+function parseShoeDirectoryCSV(csvText){
+  const newD={};
+  const duplicateMap={};
+  LAST_DIRECTORY_DUPES=[];
+  const rows=csvToRows(csvText);
+
+  const AISLE_RE = /^[A-Z]\d{1,2}(\s*\(|$|\s*Column|\s+Continued)/i;
+  const SHOE_RE  = /^[WMUY]\s+\S/;
+  const cleanAisle = v => (String(v||'').trim().match(/^([A-Z]\d{1,2})/i)?.[1] || '').toUpperCase();
+
+  function addDirectoryEntry(shoe, loc){
+    const cleanShoe = String(shoe||'').trim();
+    const cleanLoc = cleanAisle(loc);
+    if(!cleanShoe || !cleanLoc) return;
+
+    if(newD[cleanShoe] && newD[cleanShoe] !== cleanLoc){
+      const key = cleanShoe.toLowerCase();
+      if(!duplicateMap[key]){
+        duplicateMap[key] = { shoe: cleanShoe, locations: [newD[cleanShoe]] };
+      }
+      if(!duplicateMap[key].locations.includes(cleanLoc)){
+        duplicateMap[key].locations.push(cleanLoc);
+      }
+      console.warn(`Duplicate shoe with different locations: ${cleanShoe} (${duplicateMap[key].locations.join(' vs ')})`);
+    }
+
+    newD[cleanShoe] = cleanLoc;
+  }
+
+  // First try a normal table layout, such as: Shoe, Location/Aisle.
+  if(rows.length > 1){
+    const header = rows[0].map(h => String(h||'').trim().toLowerCase());
+    const shoeCol = header.findIndex(h => ['shoe','shoes','name','model','directory name','shoe name'].some(k => h.includes(k)));
+    const locCol  = header.findIndex(h => ['location','loc','aisle','bin'].some(k => h.includes(k)));
+    if(shoeCol >= 0 && locCol >= 0){
+      for(let r=1;r<rows.length;r++){
+        const shoe = (rows[r][shoeCol] || '').trim();
+        const loc = cleanAisle(rows[r][locCol]);
+        if(shoe && loc) addDirectoryEntry(shoe, loc);
+      }
+      if(Object.keys(newD).length > 0){
+        LAST_DIRECTORY_DUPES = Object.values(duplicateMap);
+        return newD;
+      }
+    }
+  }
+
+  // Then parse the current column-based layout: aisle codes as headers, shoes below.
+  const headerRows=[];
+  for(let i=0;i<rows.length;i++){
+    const aisles=[];
+    for(let col=0;col<rows[i].length;col++){
+      const c=String(rows[i][col]||'').trim();
+      if(c.match(AISLE_RE) && !c.match(SHOE_RE)){
+        const code=cleanAisle(c);
+        if(code) aisles.push({col,code});
+      }
+    }
+    if(aisles.length>0) headerRows.push({row:i,aisles});
+  }
+
+  if(headerRows.length===0){
+    LAST_DIRECTORY_DUPES = Object.values(duplicateMap);
+    return newD;
+  }
+
+  for(let hi=0;hi<headerRows.length;hi++){
+    const h=headerRows[hi];
+    const endRow=hi+1<headerRows.length?headerRows[hi+1].row:rows.length;
+
+    for(let row=h.row+1;row<endRow;row++){
+      for(const aisle of h.aisles){
+        const shoe=String((rows[row] && rows[row][aisle.col]) || '').trim();
+        if(shoe && !shoe.match(/^\.+$/) && !shoe.match(AISLE_RE)){
+          addDirectoryEntry(shoe, aisle.code);
+        }
+      }
+    }
+  }
+
+  LAST_DIRECTORY_DUPES = Object.values(duplicateMap);
+  return newD;
+}
+
+
+function parseAccessoryDirectoryCSV(csvText){
+  const rows=csvToRows(csvText);
+  const newA={};
+  const cleanAisle = v => (String(v||'').trim().match(/^([A-Z]\d{1,2})\b/i)?.[1] || '').toUpperCase();
+  const skipCell = v => /^(top|middle|bottom|left|right)$/i.test(String(v||'').trim());
+
+  const headerRows=[];
+  for(let i=0;i<rows.length;i++){
+    const aisles=[];
+    for(let col=0;col<rows[i].length;col++){
+      const c=String(rows[i][col]||'').trim();
+      const code=cleanAisle(c);
+      if(code) aisles.push({col,code});
+    }
+    if(aisles.length>0) headerRows.push({row:i,aisles,rowLen:rows[i].length});
+  }
+
+  for(let hi=0;hi<headerRows.length;hi++){
+    const h=headerRows[hi];
+    const endRow=hi+1<headerRows.length?headerRows[hi+1].row:rows.length;
+    for(let ai=0;ai<h.aisles.length;ai++){
+      const aisle=h.aisles[ai];
+      const nextCol=ai+1<h.aisles.length?h.aisles[ai+1].col:h.rowLen;
+      const endCol=Math.min(nextCol-1, aisle.col+3);
+      for(let row=h.row+1;row<endRow;row++){
+        for(let col=aisle.col;col<=endCol;col++){
+          const item=String((rows[row] && rows[row][col]) || '').trim();
+          if(!item || skipCell(item) || item.match(/^\.+$/) || cleanAisle(item)) continue;
+          if(/^(black|navy|slate|frost|ocean blue)$/i.test(item)) continue;
+          newA[item]=aisle.code;
+        }
+      }
+    }
+  }
+  return newA;
+}
+
+function normalizeAccyText(s){
+  return String(s||'')
+    .toLowerCase()
+    .replace(/^\d{8,}\s+/, ' ')
+    .replace(/0\.0\.0\.0\s+\d{1,3}\s*$/,' ')
+    .replace(/\b(size|width)\s+[\w.]+\b/g,' ')
+    .replace(/&/g,' and ')
+    .replace(/[^a-z0-9]+/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+
+function lookupAccy(desc){
+  const hay=normalizeAccyText(desc);
+  if(!hay) return null;
+  let best=null, bestScore=0;
+  for(const [name,loc] of Object.entries(ACCY_D)){
+    const full=normalizeAccyText(name);
+    const short=normalizeAccyText(name.replace(/\([^)]*\)/g,'').replace(/\b(acc|app|ecomm|orders|storage|new)\b/gi,' '));
+    const variants=[full, short].filter(v=>v && v.length>=4);
+    for(const v of variants){
+      const words=v.split(' ').filter(w=>w.length>=3 && !['and','the','for','with','mens','men','womens','women','unisex'].includes(w));
+      if(!words.length) continue;
+      const hits=words.filter(w=>hay.includes(w)).length;
+      const exact=hay.includes(v);
+      const ratio=hits/words.length;
+      if(exact || (hits>=1 && ratio>=0.6) || (hits>=2 && ratio>=0.45)){
+        const score=(exact?100:0)+hits*10+v.length/20;
+        if(score>bestScore){
+          bestScore=score;
+          best={loc,key:name,exact:true,type:'accy'};
+        }
+      }
+    }
+  }
+  return best;
+}
+
+
+// Apply small, deliberate warehouse corrections that cannot be represented by one
+// static aisle per shoe key. These protect against stale localStorage/old embedded
+// entries while still allowing live Google Sheets to handle normal updates.
+function applyDirectoryCorrections(){
+  // Current sheet location for this model; old saved copies may still have C23.
+  if(D['W Cloudmonster 3 Hyper']) D['W Cloudmonster 3 Hyper'] = 'C15';
+  D['W Cloudmonster Hyper'] = 'C15';
+}
+
+// Rebuild lookup indices
+function rebuildIndices(){
+  applyDirectoryCorrections();
+  DL={};
+  DL_NP={};
+  for(const k in D){
+    DL[k.toLowerCase()]={loc:D[k],key:k};
+    const stripped=k.toLowerCase().replace(/\s*\([^)]+\)\s*$/,'').trim();
+    if(!DL_NP[stripped]) DL_NP[stripped]={loc:D[k],key:k};
+  }
+}
+
+applyDirectoryCorrections();
+
+// Save the embedded directory as the built-in fallback (untouched original)
+const BUILTIN_D = {...D};
+const BUILTIN_ACCY_D = {...ACCY_D};
+const LS_KEY = 'shoeLocator_directory_v2';
+const LS_ACCY_KEY = 'shoeLocator_accy_directory_v1';
+const LS_DATE_KEY = 'shoeLocator_directory_date_v2';
+const LS_SOURCE_KEY = 'shoeLocator_directory_source_v2';
+
+// Update the status indicator
+function setDirStatus(msg, isError){
+  const el = document.getElementById('dir-status');
+  if(!el) return;
+  el.textContent = msg;
+  el.style.color = isError ? 'var(--warn)' : 'var(--muted)';
+}
+
+function updateSearchPlaceholderCount(){
+  const sr = document.getElementById('sr');
+  if(sr && sr.querySelector('.empty')){
+    sr.querySelector('.empty').textContent = `Start typing — ${Object.keys(D).length} shoes + ${Object.keys(ACCY_D).length} accy/app items indexed`;
+  }
+}
+
+function directoryStatusSuffix(){
+  if(!LAST_DIRECTORY_DUPES.length) return '';
+  return ` · ⚠ ${LAST_DIRECTORY_DUPES.length} duplicate shoe${LAST_DIRECTORY_DUPES.length!==1?'s':''}`;
+}
+
+function formatSavedDateTime(dateValue){
+  if(!dateValue) return 'unknown date';
+  const d = new Date(dateValue);
+  if(isNaN(d.getTime())) return 'unknown date';
+  return d.toLocaleString();
+}
+
+// Save directory to localStorage (persists across sessions)
+function saveDirectoryToLocalStorage(source){
+  try{
+    localStorage.setItem(LS_KEY, JSON.stringify(D));
+    localStorage.setItem(LS_ACCY_KEY, JSON.stringify(ACCY_D));
+    localStorage.setItem(LS_DATE_KEY, new Date().toISOString());
+    localStorage.setItem(LS_SOURCE_KEY, source);
+  }catch(e){ console.warn('Could not save to localStorage:', e); }
+}
+
+// Fetch text from a URL and reject Google error/login HTML.
+// Uses multiple routes because local file:// tools can be inconsistent with Google CSV/CORS.
+function cacheBustUrl(url){
+  const sep = url.includes('?') ? '&' : '?';
+  return url + sep + '_=' + Date.now();
+}
+
+async function fetchWithTimeout(url, ms){
+  const controller = new AbortController();
+  const timer = setTimeout(()=>controller.abort(), ms || 12000);
+  try{
+    return await fetch(url, { cache:'no-store', redirect:'follow', signal:controller.signal });
+  }finally{
+    clearTimeout(timer);
+  }
+}
+
+async function fetchCSVText(url){
+  const freshUrl = cacheBustUrl(url);
+  const urls = [
+    { label:'direct Google CSV', url:freshUrl },
+    { label:'AllOrigins proxy', url:'https://api.allorigins.win/raw?url=' + encodeURIComponent(freshUrl) },
+    { label:'CORSProxy.io', url:'https://corsproxy.io/?' + encodeURIComponent(freshUrl) },
+    { label:'CodeTabs proxy', url:'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(freshUrl) }
+  ];
+
+  let lastError = null;
+  for(const source of urls){
+    try{
+      const resp = await fetchWithTimeout(source.url, 12000);
+      if(!resp.ok) throw new Error(`${source.label} HTTP ${resp.status}`);
+      const txt = await resp.text();
+
+      if(!txt || txt.trim().length === 0){
+        throw new Error(`${source.label} returned an empty file`);
+      }
+      if(txt.trimStart().startsWith('<')){
+        throw new Error(`${source.label} returned HTML instead of CSV`);
+      }
+      return { csv: txt, source: source.label };
+    }catch(e){
+      lastError = e;
+      console.warn('CSV fetch attempt failed:', e);
+    }
+  }
+
+  throw lastError || new Error('Could not fetch CSV');
+}
+
+async function loadDirectoryFromGoogle(){
+  if(window._directoryRefreshInProgress) return false;
+  window._directoryRefreshInProgress = true;
+  const btn=document.getElementById('refresh-dir-btn');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Loading...';}
+  setDirStatus('Fetching live shoe + accessory directories from Google Sheets…');
+
+  let shoeLoaded=false, accyLoaded=false, shoeCount=Object.keys(D).length, accyCount=Object.keys(ACCY_D).length;
+  let sources=[];
+
+  try{
+    const result = await fetchCSVText(SHEET_URL);
+    const newD=parseShoeDirectoryCSV(result.csv);
+    const count=Object.keys(newD).length;
+
+    if(count<10){
+      throw new Error(`Only parsed ${count} shoes — CSV format unexpected`);
+    }
+
+    D=newD;
+    rebuildIndices();
+    shoeLoaded=true;
+    shoeCount=count;
+    sources.push(`shoes via ${result.source}`);
+  }catch(err){
+    console.warn('Shoe directory load failed:', err);
+  }
+
+  try{
+    const accyResult = await fetchCSVText(ACCY_SHEET_URL);
+    const newA=parseAccessoryDirectoryCSV(accyResult.csv);
+    const aCount=Object.keys(newA).length;
+    if(aCount>=5){
+      ACCY_D=newA;
+      accyLoaded=true;
+      accyCount=aCount;
+      sources.push(`accy via ${accyResult.source}`);
+    }else{
+      throw new Error(`Only parsed ${aCount} accessory items — CSV format unexpected`);
+    }
+  }catch(err){
+    console.warn('Accessory directory load failed:', err);
+  }
+
+  if(shoeLoaded || accyLoaded){
+    saveDirectoryToLocalStorage(shoeLoaded || accyLoaded ? 'google-sheets' : 'unknown');
+    const today=new Date().toLocaleString();
+    setDirStatus(`✓ Loaded ${shoeCount} shoes + ${accyCount} accy/app items (${sources.join(' · ') || 'saved data'} · ${today})${directoryStatusSuffix()}`);
+    updateSearchPlaceholderCount();
+    if(btn){btn.disabled=false;btn.textContent='✓ Loaded';
+      setTimeout(()=>{btn.textContent='🔄 Refresh from Sheets';},2500);}
+    window._directoryRefreshInProgress = false;
+    return true;
+  }
+
+  setDirStatus(`⚠ Sheets refresh failed. Using saved/built-in directory. Try the CSV upload as backup.`, true);
+  if(btn){btn.disabled=false;btn.textContent='🔄 Refresh from Sheets';}
+  window._directoryRefreshInProgress = false;
+  return false;
+}
+
+// Handle CSV file selected by user
+function handleCSVUpload(event){
+  const file = event.target.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try{
+      const csv = e.target.result;
+      const newD = parseShoeDirectoryCSV(csv);
+
+      if(Object.keys(newD).length < 10){
+        setDirStatus(`⚠ Could not parse that CSV — only ${Object.keys(newD).length} shoes found. Make sure it's the warehouse directory CSV.`, true);
+        event.target.value = '';
+        return;
+      }
+
+      // Update directory and indices
+      D = newD;
+      rebuildIndices();
+      saveDirectoryToLocalStorage('csv-upload');
+
+      const today = new Date().toLocaleString();
+      setDirStatus(`✓ Loaded ${Object.keys(D).length} shoes from ${file.name} (saved · ${today})${directoryStatusSuffix()}`);
+      updateSearchPlaceholderCount();
+    }catch(err){
+      setDirStatus(`⚠ Failed to read CSV: ${err.message}`, true);
+    }
+    event.target.value = ''; // reset so re-uploading same file works
+  };
+  reader.onerror = () => setDirStatus('⚠ Could not read file', true);
+  reader.readAsText(file);
+}
+
+// Restore the built-in directory (discard uploaded one)
+function resetDirectory(){
+  if(!confirm('Restore the built-in directory? Your uploaded CSV will be discarded.')) return;
+  D = {...BUILTIN_D};
+  ACCY_D = {...BUILTIN_ACCY_D};
+  rebuildIndices();
+  try{
+    localStorage.removeItem(LS_KEY);
+    localStorage.removeItem(LS_ACCY_KEY);
+    localStorage.removeItem(LS_DATE_KEY);
+    localStorage.removeItem(LS_SOURCE_KEY);
+  }catch(e){}
+  LAST_DIRECTORY_DUPES=[];
+  setDirStatus(`✓ Restored built-in directory (${Object.keys(D).length} shoes + ${Object.keys(ACCY_D).length} accy/app items)`);
+  updateSearchPlaceholderCount();
+}
+
+function hardRefreshDirectory(){
+  try{
+    localStorage.removeItem(LS_KEY);
+    localStorage.removeItem(LS_ACCY_KEY);
+    localStorage.removeItem(LS_DATE_KEY);
+    localStorage.removeItem(LS_SOURCE_KEY);
+  }catch(e){}
+  setDirStatus('Cleared saved directory. Pulling fresh data from Google Sheets…');
+  loadDirectoryFromGoogle();
+}
+
+// On startup: prefer saved (localStorage) → embedded → auto-attempt Google Sheets refresh in background
+window.addEventListener('DOMContentLoaded',()=>{
+  let usedSaved = false;
+  let savedSource = 'unknown';
+  try{
+    const saved = localStorage.getItem(LS_KEY);
+    if(saved){
+      const parsed = JSON.parse(saved);
+      if(parsed && Object.keys(parsed).length > 10){
+        D = parsed;
+        usedSaved = true;
+        savedSource = localStorage.getItem(LS_SOURCE_KEY) || 'unknown';
+      }
+    }
+    const savedAccy = localStorage.getItem(LS_ACCY_KEY);
+    if(savedAccy){
+      const parsedAccy = JSON.parse(savedAccy);
+      if(parsedAccy && Object.keys(parsedAccy).length > 5){
+        ACCY_D = parsedAccy;
+      }
+    }
+  }catch(e){ console.warn('Failed to load saved directory:', e); }
+
+  rebuildIndices();
+  updateSearchPlaceholderCount();
+
+  if(usedSaved){
+    const date = localStorage.getItem(LS_DATE_KEY);
+    const dateStr = formatSavedDateTime(date);
+    const srcLabel = savedSource === 'google-sheets' ? 'Google Sheets' : 'uploaded CSV';
+    setDirStatus(`📂 Using saved directory from ${srcLabel} (${Object.keys(D).length} shoes + ${Object.keys(ACCY_D).length} accy/app items · ${dateStr}). Click Refresh to update.`);
+  } else {
+    setDirStatus(`📂 Using built-in directory (${Object.keys(D).length} shoes + ${Object.keys(ACCY_D).length} accy/app items). Click Refresh from Sheets to get latest.`);
+  }
+
+  // Auto-attempt Google Sheets refresh in background (silently fails to localStorage/embedded)
+  loadDirectoryFromGoogle();
+});
+
+// Brands to strip (longest first)
+const BRANDS=['New Balance','Brooks','ASICS','Saucony','Mizuno','Salomon','HOKA',
+              'Nike','Adidas','adidas','KARHU','Diadora','On Running','Altra','On'];
+const BRE=new RegExp('^('+BRANDS.map(b=>b.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')\\s+','i');
+
+function displayBrandName(name){
+  const b=String(name||'').trim();
+  if(!b) return '';
+  const low=b.toLowerCase();
+  if(low==='adidas') return 'Adidas';
+  if(low==='asics') return 'ASICS';
+  if(low==='hoka') return 'HOKA';
+  if(low==='karhu') return 'KARHU';
+  if(low==='on running'||low==='on') return 'On';
+  return b.replace(/\b\w/g, ch=>ch.toUpperCase());
+}
+
+function extractBrand(rawDesc, type){
+  if(type==='accy'||type==='other') return type==='accy' ? 'Accy/App' : 'Other';
+  let text=String(rawDesc||'').trim().replace(/^\d{8,}\s+/, '').trim();
+  const pipeIdx=text.indexOf('|');
+  if(pipeIdx!==-1) text=text.substring(pipeIdx+1).trim();
+  const sortedBrands=[...BRANDS].sort((a,b)=>b.length-a.length);
+  for(const brand of sortedBrands){
+    const re=new RegExp('^'+brand.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','i');
+    if(re.test(text)) return displayBrandName(brand);
+  }
+  return '';
+}
+
+
+// ─── Width suffix ─────────────────────────────────────────────────────────────
+// wideFlag = "WIDE" was found explicitly in the description text
+// Women: B=standard  D=wide  2E=wide  4E=extra wide
+// Men:   B=narrow    D=standard  2E=wide  4E=extra wide
+function wSuf(g, code, wideFlag) {
+  const c=(code||'').trim().toUpperCase();
+  if(c==='4E') return ' EXTRA WIDE';          // always extra wide
+  if(wideFlag) return ' WIDE';                 // "WIDE" in description = wide
+  if(!c||c==='M') return '';
+  if(g==='W'){
+    if(c==='B'||c==='N'||c==='2A') return '';
+    if(c==='D'||c==='2E'||c==='EE') return ' WIDE';
+  }
+  if(g==='M'){
+    if(c==='B'||c==='2A') return ' NARROW';
+    if(c==='D') return '';
+    if(c==='2E'||c==='EE') return ' WIDE';
+  }
+  if(c==='WIDE') return ' WIDE';
+  if(c==='EXTRA WIDE') return ' EXTRA WIDE';
+  if(c==='NARROW') return ' NARROW';
+  return '';
+}
+
+// ─── Candidate model names ────────────────────────────────────────────────────
+function cands(model) {
+  const seen=new Set(), out=[];
+  const add=s=>{s=s.trim();if(s&&!seen.has(s.toLowerCase())){seen.add(s.toLowerCase());out.push(s);}};
+  add(model);
+  // NB: strip "FuelCell " unless followed by "XC"
+  if(/^FuelCell (?!XC)/i.test(model)) add(model.replace(/^FuelCell /i,''));
+  if(/^Fresh Foam X /i.test(model))   add(model.replace(/^Fresh Foam X /i,''));
+  if(/^Fresh Foam /i.test(model))     add(model.replace(/^Fresh Foam /i,''));
+  // Nike
+  if(/^Air Zoom /i.test(model)) add(model.replace(/^Air Zoom /i,''));
+  if(/^Air Max /i.test(model))  add(model.replace(/^Air Max /i,''));
+  if(/^ZoomX /i.test(model))    add(model.replace(/^ZoomX /i,''));
+  if(/^React /i.test(model))    add(model.replace(/^React /i,''));
+  if(/^Air /i.test(model))      add(model.replace(/^Air /i,''));
+  // ASICS
+  if(/^Gel-/i.test(model)) add(model.replace(/^Gel-/i,''));
+  if(/^Gel /i.test(model)) add(model.replace(/^Gel /i,''));
+  // Apply secondary transforms to everything so far
+  const snap=[...out];
+  for(const c of snap){
+    add(c.replace(/\s+v\d+$/i,''));          // strip trailing version (v14, v1 etc.)
+    add(c.replace(/\s+GTS\b/gi,''));         // strip inline GTS
+    add(c.replace(/\s+GS$/i,''));            // strip trailing GS
+    add(c.replace(/\s+ATC$/i,''));           // strip trailing ATC (All Terrain Collection)
+    add(c.replace(/\s*\([^)]+\)\s*$/,''));   // strip trailing parenthetical e.g. "(SE)"
+  }
+  // FuelCell XC Seven: inject SKU variants if not already present
+  if(/FuelCell XC Seven/i.test(model)&&!/WXCS7|MXCS7|UXCS7/i.test(model)){
+    add(model.replace(/FuelCell XC Seven/i,'FuelCell XC Seven v5 WXCS7'));
+    add(model.replace(/FuelCell XC Seven/i,'FuelCell XC Seven v5 MXCS7'));
+    add(model.replace(/FuelCell XC Seven/i,'FuelCell XC Seven v5 UXCS7'));
+  }
+  return out;
+}
+
+// ─── Core lookup ─────────────────────────────────────────────────────────────
+// When gender is null (no pipe in description), try U → W → M → Y in order
+function lookup(gender, model, widthCode, wideFlag) {
+  const gList = gender ? [gender] : ['U','W','M','Y'];
+  for(const g of gList){
+    const suf=wSuf(g, widthCode, wideFlag);
+    const tryV=(variant)=>{
+      const requestedKey=`${g} ${variant}${suf}`;
+      const exactTries=[requestedKey];
+      for(const key of exactTries){
+        if(D[key]) return{loc:D[key],key,exact:true};
+        const r=DL[key.toLowerCase()];
+        if(r) return{loc:r.loc,key:r.key,exact:true};
+        const r2=DL_NP[key.toLowerCase()];
+        if(r2) return{loc:r2.loc,key:r2.key,exact:true};
+      }
+
+      // If the pick list width says WIDE/EXTRA WIDE but the directory only has
+      // the base shoe, keep the requested width visible and mark the match approximate.
+      // This prevents W D or M 4E items from printing as normal-width shoes.
+      if(suf){
+        const baseKey=`${g} ${variant}`;
+        if(D[baseKey]) return{loc:D[baseKey],key:requestedKey,exact:false};
+        const rb=DL[baseKey.toLowerCase()] || DL_NP[baseKey.toLowerCase()];
+        if(rb) return{loc:rb.loc,key:requestedKey,exact:false};
+      }
+      return null;
+    };
+    for(const v of cands(model)){
+      const r=tryV(v); if(r) return r;
+    }
+  }
+  // Fuzzy word-score fallback
+  const mw=model.toLowerCase().split(/\W+/).filter(w=>w.length>=3);
+  const gL=(gender||'').toLowerCase();
+  let best=null,bs=0;
+  for(const [kl,{loc,key}] of Object.entries(DL)){
+    const parts=kl.split(' ');
+    if(gL&&parts[0]!==gL) continue;
+    const body=parts.slice(1).join(' ');
+    const sc=mw.reduce((n,w)=>n+(body.includes(w)?1:0),0);
+    if(sc>bs){bs=sc;best={loc,key,exact:false};}
+  }
+  return bs>=2?best:null;
+}
+
+// ─── Parse one description ────────────────────────────────────────────────────
+// Format A (pipe):    [ItemNum ]Gender | Brand Model[ - WIDE --] Color - Size X - Width Y
+// Format B (no pipe): [ItemNum ]Brand Model[ - WIDE --] Color - Size X[ - Width Y]  (unisex)
+function parseDesc(raw) {
+  raw=(raw||'').trim();
+  let gender=null, afterPipe=raw;
+
+  const pipeIdx=raw.indexOf('|');
+  if(pipeIdx!==-1){
+    const before=raw.substring(0,pipeIdx).toLowerCase();
+    afterPipe=raw.substring(pipeIdx+1).trim();
+    if(before.includes('women'))       gender='W';
+    else if(before.includes('men'))    gender='M';
+    else if(before.includes('youth')||before.includes('kid')||
+            before.includes('child')||before.includes('boys')||
+            before.includes('girls'))  gender='Y';
+    else if(before.includes('unisex')) gender='U';
+  } else {
+    afterPipe=raw.replace(/^\d{8,}\s+/,'').trim();
+  }
+
+  const parts=afterPipe.split(/\s+-+\s*/);
+  let model=parts[0].trim();
+  let size=null, widthCode=null, wideFlag=false, colorName=null;
+  let sizeFound=false;
+
+  for(let i=1;i<parts.length;i++){
+    const p=parts[i].trim();
+    if(!p) continue;
+    if(/^WIDE\b/i.test(p)){wideFlag=true;continue;}
+    if(/^HiVo\b/i.test(p)||/^HIVO\b/i.test(p)){model+=' HiVo';continue;}
+    if(/^BGR!?$/i.test(p)){model+=' - BGR';continue;}
+    const sm=p.match(/^Size\s+([\d.]+)/i); if(sm){size=sm[1];sizeFound=true;continue;}
+    const wm=p.match(/^Width\s+(\S+)/i);   if(wm){widthCode=wm[1];continue;}
+    // Unclaimed segment — last one before Size is the color name
+    if(!sizeFound && !/^\d+$/.test(p) && !/^0\.0\.0\.0/.test(p) && !/^\$/.test(p)){
+      colorName=p; // keep overwriting — last before Size wins
+    }
+  }
+
+  // Clean up color name from any trailing warehouse/order noise
+  if(colorName){
+    colorName=colorName.replace(/\s+0\.0\.0\.0.*$/,'').replace(/\s+\d+\s*$/,'').trim();
+    if(!colorName) colorName=null;
+  }
+
+  model=model.replace(BRE,'').trim();
+  return{gender,model,size,widthCode,wideFlag,colorName};
+}
+
+// ─── Parse full pick list ─────────────────────────────────────────────────────
+const SKIP=/^(item#|product|description|total\s*items|monday|tuesday|wednesday|thursday|friday|saturday|sunday|order|pick|batch|date)/i;
+
+// PDFs wrap long descriptions across lines.
+// Key rule: a line starting with an 8+ digit item number is ALWAYS a new item,
+// never a continuation. Pipe items and no-pipe/unisex items both stay open long
+// enough to catch wrapped fragments like "- Size 10" on the next line.
+function joinWrappedLines(text){
+  const rawLines=text.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
+  const out=[];
+  let cur=null;
+  for(const line of rawLines){
+    const startsWithItemNum=/^\d{8,}/.test(line);
+    const isMeta=SKIP.test(line);
+
+    if(startsWithItemNum||line.includes('|')){
+      // Always a new item — flush whatever was being accumulated
+      if(cur!==null) out.push(cur);
+      cur=line;
+
+      // If the warehouse/qty is already on this same line, the item is complete
+      if(/0\.0\.0\.0\s+\d{1,3}\s*$/.test(cur)){
+        out.push(cur);
+        cur=null;
+      }
+    } else if(cur!==null){
+      if(isMeta){
+        out.push(cur);
+        cur=null;
+        out.push(line);
+      } else {
+        cur=cur+' '+line;  // continuation, including wrapped no-pipe sizes
+        if(/0\.0\.0\.0\s+\d{1,3}\s*$/.test(cur)){
+          out.push(cur);
+          cur=null;
+        }
+      }
+    } else {
+      out.push(line);    // header / metadata
+    }
+  }
+  if(cur!==null) out.push(cur);
+  return out;
+}
+
+
+function cleanItemDescription(line){
+  return String(line||'')
+    .replace(/^\d{8,}\s+/, '')
+    .replace(/\s*0\.0\.0\.0\s+\d{1,3}\s*$/, '')
+    .trim();
+}
+
+function extractSizeFromDesc(desc){
+  return (String(desc||'').match(/\bSize\s+([\d.]+)/i)||[])[1] || null;
+}
+
+function makeNonShoeItem(line, index, itemNum, qty, accy){
+  const desc=cleanItemDescription(line);
+  const size=extractSizeFromDesc(desc);
+  const displayName=desc.replace(/\s*0\.0\.0\.0\s+\d{1,3}\s*$/,'').trim() || 'Accessory / Non-shoe item';
+  return {
+    originalIndex:index,
+    itemNum:itemNum||'—', rawDesc:desc,
+    gender:'', model:displayName, widthSuffix:'',
+    size, widthCode:null, qty,
+    colorName:null,
+    brand:extractBrand(desc, accy?'accy':'other'),
+    location:accy?.loc||null, matchKey:displayName,
+    exact:!!accy, isOld:accy?parseInt(String(accy.loc).replace(/[A-Z]/g,''))>22:false,
+    type:accy?'accy':'other', nonShoe:true
+  };
+}
+
+
+function applyItemLocationRules(item){
+  const g = String(item.gender || '').toUpperCase();
+  const modelText = String(item.model || item.matchKey || '');
+  const keyText = String(item.matchKey || '');
+  const combined = `${modelText} ${keyText}`.toLowerCase();
+  const sizeNum = parseFloat(item.size);
+
+  // Cloudmonster Hyper was previously cached/saved as C23 in some versions.
+  // Current live/backup location is C15 for W Cloudmonster 3 Hyper.
+  if(g === 'W' && /cloudmonster\s+(?:3\s+)?hyper/i.test(`${modelText} ${keyText}`) && !/\bLS\b/i.test(`${modelText} ${keyText}`)){
+    item.location = 'C15';
+    item.matchKey = 'W Cloudmonster 3 Hyper';
+    item.exact = true;
+  }
+
+  // Bondi 9 normal-width split locations by size.
+  // Only apply to normal-width Bondi 9, not WIDE, X WIDE, SR, etc.
+  const isNormalWidth = !String(item.widthSuffix || '').trim();
+  const isBondi9 = /\bbondi\s+9\b/i.test(combined) && !/\bSR\b/i.test(combined) && !/\bwide\b/i.test(combined) && !/\bx\s*wide\b/i.test(combined);
+
+  if(isNormalWidth && isBondi9 && !isNaN(sizeNum)){
+    if(g === 'W'){
+      item.location = sizeNum <= 8 ? 'B3' : 'C3';
+      item.matchKey = 'W Bondi 9';
+      item.exact = true;
+    } else if(g === 'M'){
+      item.location = sizeNum >= 11.5 ? 'B4' : 'C4';
+      item.matchKey = 'M Bondi 9';
+      item.exact = true;
+    }
+  }
+
+  item.isOld = item.location ? parseInt(String(item.location).replace(/[A-Z]/g,''), 10) > 22 : false;
+  return item;
+}
+
+
+function parsePL(text){
+  const items=[];
+  for(const raw of joinWrappedLines(text)){
+    const line=raw.trim();
+    if(!line||SKIP.test(line)) continue;
+
+    const hasPipe=line.includes('|');
+    let hasBrand=true;
+    const accyLineMatch=lookupAccy(line);
+
+    // No-pipe lines: process if they are either a known shoe brand or a known accy/app item.
+    if(!hasPipe){
+      hasBrand=BRANDS.some(b=>
+        new RegExp('\\b'+b.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','i').test(line));
+      if(!hasBrand && !accyLineMatch) continue;
+    }
+
+    const cols=line.split(/\t/).map(c=>c.trim());
+    let itemNum=null, desc=null, qty=1;
+
+    if(hasPipe){
+      // Tab-separated format: find column with pipe
+      for(let i=0;i<cols.length;i++){
+        if(cols[i].includes('|')){
+          desc=cols[i];
+          if(i>0&&/^\d{8,}$/.test(cols[i-1])) itemNum=cols[i-1];
+          for(let j=cols.length-1;j>i;j--){
+            const n=parseInt(cols[j]);
+            if(!isNaN(n)&&n>=1&&n<500){qty=n;break;}
+          }
+          break;
+        }
+      }
+    } else {
+      desc=line;
+    }
+
+    // Extract qty from "0.0.0.0 N" pattern at end of line (ShipStation format)
+    // This catches the multi-quantity case the tab-split misses
+    const trailingQty=line.match(/0\.0\.0\.0\s+(\d{1,3})\s*$/);
+    if(trailingQty){
+      const n=parseInt(trailingQty[1]);
+      if(n>=1&&n<500) qty=n;
+    } else if(!hasPipe){
+      // Fallback for no-pipe lines: last small integer at end
+      const qm=line.match(/\b(\d{1,3})\s*$/);
+      if(qm){const n=parseInt(qm[1]);if(n>=1&&n<500)qty=n;}
+    }
+
+    // Strip warehouse code and qty from desc so they don't pollute the color name
+    if(desc){
+      desc=desc.replace(/\s*0\.0\.0\.0\s+\d{1,3}\s*$/,'').trim();
+    }
+
+    if(!itemNum){
+      const m=line.match(/^(\d{8,})\s/);
+      if(m) itemNum=m[1];
+    }
+
+    if(!desc) continue;
+
+    const accyFirst=accyLineMatch || lookupAccy(desc);
+    if(!hasPipe && !hasBrand){
+      items.push(makeNonShoeItem(desc, items.length, itemNum, qty, accyFirst));
+      continue;
+    }
+
+    const{gender,model,size,widthCode,wideFlag,colorName}=parseDesc(desc);
+    if(!model){
+      items.push(makeNonShoeItem(desc, items.length, itemNum, qty, accyFirst));
+      continue;
+    }
+
+    const result=lookup(gender,model,widthCode,wideFlag);
+    const accyFallback=result?null:(accyFirst||lookupAccy(desc+' '+model));
+    if(accyFallback){
+      items.push(makeNonShoeItem(desc, items.length, itemNum, qty, accyFallback));
+      continue;
+    }
+
+    const dGender=result?result.key.split(' ')[0]:(gender||'?');
+    const suf=wSuf(dGender,widthCode,wideFlag);
+    const isOld=result?parseInt(result.loc.replace(/[A-Z]/g,''))>22:false;
+
+    const item = {
+      originalIndex:items.length,
+      itemNum:itemNum||'—', rawDesc:desc,
+      gender:dGender, model, widthSuffix:suf,
+      size, widthCode, qty,
+      brand:extractBrand(desc, 'shoe'),
+      colorName:colorName||null,
+      location:result?.loc||null, matchKey:result?.key||null,
+      exact:result?.exact||false, isOld,
+      type:'shoe', nonShoe:false
+    };
+    items.push(applyItemLocationRules(item));
+  }
+  return items;
+}
+
+let _currentItems=[];
+
+function aisleSortValue(loc){
+  const m=String(loc||'').toUpperCase().match(/^([A-Z])(\d{1,2})/);
+  if(!m) return {letter:'Z', num:999};
+  return {letter:m[1], num:parseInt(m[2],10)};
+}
+
+function shoeSortKey(it){
+  return String(it.matchKey||`${it.gender||'?'} ${it.model}${it.widthSuffix||''}`).toUpperCase();
+}
+
+function sizeSortValue(size){
+  const m=String(size||'').match(/\d+(?:\.\d+)?/);
+  return m ? parseFloat(m[0]) : 999;
+}
+
+function compareByAisleThenOriginal(a,b){
+  const aa=aisleSortValue(a.location);
+  const bb=aisleSortValue(b.location);
+  const c=aa.letter.localeCompare(bb.letter) || aa.num-bb.num;
+  if(c) return c;
+
+  const shoeCmp=shoeSortKey(a).localeCompare(shoeSortKey(b));
+  if(shoeCmp) return shoeCmp;
+
+  const sizeCmp=sizeSortValue(a.size)-sizeSortValue(b.size);
+  return sizeCmp || (a.originalIndex||0)-(b.originalIndex||0);
+}
+
+function getDisplayItems(items){
+  const sortByAisle = !!document.getElementById('sort-aisle')?.checked;
+  if(sortByAisle) return [...items].sort(compareByAisleThenOriginal);
+  return [...items].sort((a,b)=>{
+    const au=a.nonShoe && !a.location;
+    const bu=b.nonShoe && !b.location;
+    if(au!==bu) return au?1:-1;
+    return (a.originalIndex||0)-(b.originalIndex||0);
+  });
+}
+
+// ─── Render ── pick-list order by default, optional aisle order ───────────────
+function run(){
+  const text=document.getElementById('pi').value;
+  if(!text.trim()){alert('Paste a pick list first.');return;}
+
+  const totalMatch=text.match(/Total Items Required:\s*(\d+)/i);
+  const expectedTotal=totalMatch?parseInt(totalMatch[1]):null;
+
+  const items=parsePL(text);
+  _currentItems=items;
+
+  if(!items.length){
+    document.getElementById('out').innerHTML=
+      `<div class="card"><div class="empty">No shoe lines found. Paste the full ShipStation pick list text including item numbers and descriptions.</div></div>`;
+    return;
+  }
+  const displayItems=getDisplayItems(items);
+  const sortByAisle=!!document.getElementById('sort-aisle')?.checked;
+  const orderLabel=sortByAisle?'Aisle order':'Pick-list order';
+  const nf=items.filter(i=>!i.location);
+  const approx=items.filter(i=>i.location&&!i.exact);
+  const today=new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  // Sum of all quantities
+  const totalQty=items.reduce((s,it)=>s+(it.qty||1),0);
+
+  // ── Simple total line ─────────────────────────────────────────────────────
+  const countBanner=`<div style="font-size:.85rem;margin-bottom:10px;color:#666">
+    <strong>Total Items Required:</strong> ${totalQty}${expectedTotal!==null&&totalQty!==expectedTotal?` <span style="color:#c2410c">(list says ${expectedTotal})</span>`:''} <span style="color:#888">· ${orderLabel}</span></div>`;
+
+  // ── Table ─────────────────────────────────────────────────────────────────
+  // Column order (screen + print): Aisle | Size | Item# | Shoe | Brand | Qty
+  let html=`<div class="card">
+
+  <div class="print-header print-only">
+    <div>
+      <img src="data:image/png;base64,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" alt="Fleet Feet" style="height:42pt;width:auto;display:block;margin-bottom:4pt">
+      <div style="font-size:11pt;font-weight:bold;letter-spacing:.5px">PICK LIST</div>
+      <div style="font-size:8pt;margin-top:1pt">${items.length} item${items.length!==1?'s':''}</div>
+    </div>
+    <div class="ph-meta">Printed: ${today}</div>
+  </div>
+
+  ${countBanner}
+  <div class="rh no-print">
+    <h3>Results <span class="badge">${items.length} item${items.length!==1?'s':''}</span><span class="badge" style="background:#f8fafc;color:var(--muted)">${orderLabel}</span>${
+      nf.length?`<span class="badge" style="background:#fff1f2;color:var(--err)">${nf.length} not found</span>`:''
+    }${approx.length?`<span class="badge" style="background:#fffbeb;color:var(--warn)">${approx.length} approx</span>`:''}</h3>
+    <div style="display:flex;gap:7px">
+      <button class="btn btn-secondary btn-sm" onclick="window.print()">🖨 Print</button>
+      <button class="btn btn-secondary btn-sm" onclick="copyTSV()">📋 Copy</button>
+    </div>
+  </div>
+
+  <table>
+    <thead><tr>
+      <th class="print-only" style="width:16pt">#</th>
+      <th class="print-only" style="width:20pt">□</th>
+      <th style="width:52px">Aisle</th>
+      <th style="width:44px">Size</th>
+      <th style="width:110px">Item #</th>
+      <th>Item</th>
+      <th style="width:72px">Brand</th>
+      <th style="width:42px">Qty</th>
+    </tr></thead>
+    <tbody>`;
+
+  displayItems.forEach((it,idx)=>{
+    const key=it.matchKey||`${it.gender?it.gender+' ':''}${it.model}${it.widthSuffix}`;
+    const locCls=!it.location?'lb-nf':it.isOld?'lb-old':'';
+    const sub=[];
+    if(it.colorName) sub.push(it.colorName);
+    if(it.widthCode) sub.push('Width '+it.widthCode);
+    const subLine=sub.length?`<div class="ss">${sub.join(' · ')}</div>`:'';
+    const brand=it.brand||extractBrand(it.rawDesc, it.type);
+
+    html+=`<tr id="pr-${idx}">
+      <td class="print-only rnum">${idx+1}</td>
+      <td class="print-only"><div class="pcheck"></div></td>
+      <td><span class="lb ${locCls}">${it.location||'?'}</span></td>
+      <td>${it.size?`<span class="sp">${it.size}</span>`:'—'}</td>
+      <td style="color:var(--muted);font-size:.77rem;white-space:nowrap;font-family:monospace">${it.itemNum.length>4?it.itemNum.slice(0,-4)+'<strong>'+it.itemNum.slice(-4)+'</strong>':it.itemNum}</td>
+      <td>
+        <div class="sk">${key}</div>
+        ${subLine}
+        ${!it.location?`<div class="sw">⚠ Not in directory — verify manually</div>`:''}
+        ${it.location&&!it.exact?`<div class="sw">⚠ Approximate match — confirm location</div>`:''}
+      </td>
+      <td>${brand?`<span class="brand-pill">${brand}</span>`:'—'}</td>
+      <td><span class="${it.qty>1?'qty-alert':'qp'}">×${it.qty}</span></td>
+    </tr>`;
+  });
+
+  html+=`</tbody></table>`;
+
+  // ── Not-found details ─────────────────────────────────────────────────────
+  if(nf.length){
+    html+=`<details class="nf no-print"><summary>⚠ ${nf.length} item${nf.length!==1?'s':''} not found — click to expand</summary>
+      <table style="margin-top:8px"><thead><tr><th>Item #</th><th>Suggested key</th><th>Original description</th></tr></thead><tbody>`;
+    for(const it of nf)
+      html+=`<tr><td style="font-size:.8rem">${it.itemNum}</td>
+             <td class="sk">${it.matchKey||`${it.gender||'?'} ${it.model}${it.widthSuffix}`}</td>
+             <td style="color:var(--muted);font-size:.79rem">${it.rawDesc}</td></tr>`;
+    html+=`</tbody></table></details>`;
+  }
+
+  // ── Disclaimer ────────────────────────────────────────────────────────────
+  const hasIssues=nf.length||approx.length;
+  html+=`<div class="disclaimer${hasIssues?'':' no-print'}">
+    <strong>⚠ Disclaimer</strong> — This pick list is auto-generated:
+    <ul style="margin:5px 0 0 16px;line-height:1.7">
+      ${nf.length?`<li><strong>${nf.length} item(s) have no location in the directory</strong> — find them manually using the warehouse spreadsheet before picking.</li>`:''}
+      ${approx.length?`<li><strong>${approx.length} item(s) used an approximate location match</strong> — verify the aisle before picking.</li>`:''}
+      <li>Always confirm the shoe by checking the <strong>item # (UPC/barcode)</strong> printed on the box against the pick list before pulling.</li>
+      <li>The color name shown is what's on the original pick list — verify it matches the box label visually.</li>
+      <li>When in doubt, refer to the original ShipStation pick list and warehouse directory spreadsheet.</li>
+    </ul>
+  </div></div>`;
+
+  document.getElementById('out').innerHTML=html;
+}
+
+function copyTSV(){
+  const items=getDisplayItems(parsePL(document.getElementById('pi').value));
+  const rows=['Aisle\tShoe\tSize\tQty\tItem#'];
+  for(const it of items){
+    const key=it.matchKey||`${it.gender?it.gender+' ':''}${it.model}${it.widthSuffix}`;
+    rows.push([it.location||'NOT FOUND',key,it.brand||extractBrand(it.rawDesc,it.type),it.size||'',it.qty,it.itemNum].join('\t'));
+  }
+  navigator.clipboard.writeText(rows.join('\n'))
+    .then(()=>alert('Copied to clipboard!'))
+    .catch(()=>alert('Copy failed — select the table manually.'));
+}
+
+function clearAll(){
+  document.getElementById('pi').value='';
+  document.getElementById('out').innerHTML='';
+}
+
+// ─── Search ───────────────────────────────────────────────────────────────────
+function search(){
+  const q=document.getElementById('sq').value.trim().toLowerCase();
+  const el=document.getElementById('sr');
+  const totalIndexed=Object.keys(D).length+Object.keys(ACCY_D).length;
+  if(!q){el.innerHTML=`<div class="empty">Start typing — ${Object.keys(D).length} shoes + ${Object.keys(ACCY_D).length} accy/app items indexed</div>`;return;}
+  const terms=q.split(/\s+/);
+  const shoeHits=Object.entries(D)
+    .filter(([n])=>terms.every(t=>n.toLowerCase().includes(t)))
+    .map(([name,loc])=>({name,loc,type:'shoe'}));
+  const accyHits=Object.entries(ACCY_D)
+    .filter(([n])=>terms.every(t=>n.toLowerCase().includes(t)))
+    .map(([name,loc])=>({name,loc,type:'accy'}));
+  const hits=[...shoeHits,...accyHits].sort((a,b)=>{
+    const na=parseInt(String(a.loc).slice(1)),nb=parseInt(String(b.loc).slice(1));
+    const oa=na>22,ob=nb>22;
+    if(oa!==ob) return oa?1:-1;
+    return String(a.loc)[0].localeCompare(String(b.loc)[0])||na-nb||a.name.localeCompare(b.name);
+  });
+  if(!hits.length){el.innerHTML=`<div class="empty">No matches for "<strong>${q}</strong>"</div>`;return;}
+  let html=`<div style="font-size:.8rem;color:var(--muted);margin-bottom:10px">${hits.length} result${hits.length!==1?'s':''}</div>`;
+  for(const hit of hits){
+    const old=parseInt(String(hit.loc).slice(1))>22;
+    html+=`<div class="sr"><div><div class="sn">${hit.name}</div>${hit.type==='accy'?`<div class="sh">Accessory/Apparel</div>`:old?`<div class="sh">📦 Storage</div>`:''}</div><span class="lb ${old?'lb-old':''}">${hit.loc}</span></div>`;
+  }
+  el.innerHTML=html;
+}
+
+function switchTab(name,btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>
